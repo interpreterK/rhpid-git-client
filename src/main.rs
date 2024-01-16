@@ -1,27 +1,27 @@
 use libadwaita::{prelude::*, HeaderBar, glib, Application, ApplicationWindow};
 use gtk::{Box, Orientation};
 
-use crate::sidebar::sidebar as git_sidebar_tree;
+use crate::sidebar::sidebar_actions;
+use crate::about::about_actions;
 
 const DEFAULT_WINDOW_WIDTH: i32 = 1200;
 const DEFAULT_WINDOW_HEIGHT: i32 = 700;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 mod sidebar;
+mod about;
 
 fn main_window(application: &Application) {
 	application.connect_activate(|app| {
-		let sidebar_tree = git_sidebar_tree();
+		//modules
+		let (splitview, sidebar_toggle) = sidebar_actions();
+		let action_about = about_actions();
 
-		let headerbar = HeaderBar::builder()
-			.build();
-		let sidebar_button = Box::builder()
-			.tooltip_text("hi")
-			.build();
-		sidebar_button.append(&headerbar);
-
+        let header = HeaderBar::new();
+        header.pack_start(&sidebar_toggle);
+        
         let headerbox = Box::new(Orientation::Vertical, 0);
-        headerbox.append(&headerbar);
+        headerbox.append(&header);
 
 		let window = ApplicationWindow::builder()
 			.application(app)
