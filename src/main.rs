@@ -1,34 +1,43 @@
-use libadwaita::{prelude::*, HeaderBar, glib, Application, ApplicationWindow};
-use gtk::{Box, Orientation};
+use libadwaita::{prelude::*, glib, Application, ApplicationWindow, HeaderBar, OverlaySplitView, ToolbarView};
+use gtk::{gio::{ActionEntry, ActionMap}, Box as GtkBox, Orientation, ToggleButton};
 
-use crate::sidebar::sidebar_actions;
-use crate::about::about_actions;
-
-const DEFAULT_WINDOW_WIDTH: i32 = 1200;
-const DEFAULT_WINDOW_HEIGHT: i32 = 700;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-mod sidebar;
-mod about;
+fn window_header() -> (ToggleButton, HeaderBar, GtkBox) {
+	let sidebar_toggle = ToggleButton::builder()
+		.active(true)
+		.tooltip_text("Toggle Locations Sidebar")
+		.icon_name("view-sidebar-start-symbolic")
+		.build();
+
+	let header = HeaderBar::new();
+	header.pack_start(&sidebar_toggle);
+	let headerbox = GtkBox::new(Orientation::Vertical, 0);
+	headerbox.append(&header);
+
+	return (sidebar_toggle, header, headerbox);
+}
 
 fn main_window(application: &Application) {
 	application.connect_activate(|app| {
-		//modules
-		let (splitview, sidebar_toggle) = sidebar_actions();
-		let action_about = about_actions();
+		let (sidebar_toggle, _header, headerbox) = window_header();
 
-        let header = HeaderBar::new();
-        header.pack_start(&sidebar_toggle);
-        
-        let headerbox = Box::new(Orientation::Vertical, 0);
-        headerbox.append(&header);
+		let splitview = OverlaySplitView::builder()
+			.content(&headerbox)
+			.build();
+
+		let action_about: ActionEntry<ActionMap> = ActionEntry::builder("about").build();
+
+		let toolbar_view = ToolbarView::builder()
+			.content(&splitview)
+			.build();
 
 		let window = ApplicationWindow::builder()
 			.application(app)
 			.title(format!("rhpid Git Client {}", VERSION))
-			.default_width(DEFAULT_WINDOW_WIDTH)
-			.default_height(DEFAULT_WINDOW_HEIGHT)
-			.content(&headerbox)
+			.default_width(1200)
+			.default_height(700)
+			.content(&toolbar_view)
 			.build();
 		window.present();
 	});
