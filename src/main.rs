@@ -1,7 +1,18 @@
-use libadwaita::{prelude::*, glib, Application, ApplicationWindow, HeaderBar, OverlaySplitView, ToolbarView};
-use gtk::{gio::{ActionEntry, ActionMap}, Box as GtkBox, Orientation, ToggleButton};
+use libadwaita::{glib, prelude::*, AboutWindow, Application, ApplicationWindow, HeaderBar, OverlaySplitView, ToolbarView};
+use gtk::{Box as GtkBox, Orientation, ToggleButton};
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+const VERSION: 	&str = env!("CARGO_PKG_VERSION");
+const APP_ID:   &str = "com.unittensor.gitwaita";
+const APP_NAME: &str = "GitWaita";
+const DEFAULT_WIDTH:  i32 = 1200;
+const DEFAULT_HEIGHT: i32 = 700;
+
+// TODO:
+// libadwaita has no support yet for Windows, if Windows is detected switch over to pure GTK 4
+// enum Platform {
+// 	Linux,
+// 	Windows
+// }
 
 fn window_header() -> (ToggleButton, HeaderBar, GtkBox) {
 	let sidebar_toggle = ToggleButton::builder()
@@ -11,32 +22,41 @@ fn window_header() -> (ToggleButton, HeaderBar, GtkBox) {
 		.build();
 
 	let header = HeaderBar::new();
-	header.pack_start(&sidebar_toggle);
 	let headerbox = GtkBox::new(Orientation::Vertical, 0);
+	header.pack_start(&sidebar_toggle); //Place toggling the sidebar button on the left side of the window frame
 	headerbox.append(&header);
 
 	return (sidebar_toggle, header, headerbox);
 }
 
+fn locations_sidebar(headerbox: GtkBox) -> (OverlaySplitView, ToolbarView) {
+	let splitview = OverlaySplitView::builder()
+		.content(&headerbox)
+		.build();
+
+	let toolbar_view = ToolbarView::builder()
+		.content(&splitview)
+		.build();
+
+	return (splitview, toolbar_view);
+}
+
+fn about() {
+	let about_window = AboutWindow::builder()
+		.transient_for(transient_for)
+		.build();
+}
+
 fn main_window(application: &Application) {
 	application.connect_activate(|app| {
-		let (sidebar_toggle, _header, headerbox) = window_header();
-
-		let splitview = OverlaySplitView::builder()
-			.content(&headerbox)
-			.build();
-
-		let action_about: ActionEntry<ActionMap> = ActionEntry::builder("about").build();
-
-		let toolbar_view = ToolbarView::builder()
-			.content(&splitview)
-			.build();
+		let (_sidebar_toggle, _header, headerbox) = window_header();
+		let (_splitview, toolbar_view) = locations_sidebar(headerbox);
 
 		let window = ApplicationWindow::builder()
 			.application(app)
-			.title(format!("rhpid Git Client {}", VERSION))
-			.default_width(1200)
-			.default_height(700)
+			.title(APP_NAME)
+			.default_width(DEFAULT_WIDTH)
+			.default_height(DEFAULT_HEIGHT)
 			.content(&toolbar_view)
 			.build();
 		window.present();
@@ -45,9 +65,10 @@ fn main_window(application: &Application) {
 
 fn main() -> glib::ExitCode {
 	let application = Application::builder()
-		.application_id("com.rhpidfyre.gtk4gitclient")
+		.application_id(APP_ID)
 		.build();
-
 	main_window(&application);
+
+	println!("Using version {}", VERSION);
 	application.run()
 }
